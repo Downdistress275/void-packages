@@ -29,3 +29,9 @@ do_install() {
 	vlicense resources/app/LICENSE.txt LICENSE
 
 }
+
+post_install() {
+	for f in $(find ${DESTDIR}/opt/vscodium -type f); do
+		readelf -d "$f" 2>/dev/null | grep -qE 'ld-linux-x86-64|ld64\.so' && echo "FOREIGN-ARCH: $f"
+	done
+}
