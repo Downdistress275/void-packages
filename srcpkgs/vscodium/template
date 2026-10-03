@@ -1,7 +1,7 @@
 # Template file for vscodium aarch64
 pkgname=vscodium
 version=1.135.06055
-revision=1
+revision=2
 only_for_archs="aarch64"
 create_wrksrc=yes
 depends="gtk+3 nss alsa-lib libsecret libxkbfile xdg-utils libXScrnSaver"
@@ -31,11 +31,13 @@ do_install() {
 }
 
 post_install() {
-	local d=${DESTDIR}/opt/vscodium/resources/app/node_modules.asar.unpacked
-
-	# foreign-architecture binaries that can't run on aarch64
-	rm -rf ${d}/@vscode/ripgrep-universal/bin/linux-s390x
-	rm -rf ${d}/@vscode/ripgrep-universal/bin/linux-ppc64
-	rm -f ${d}/@microsoft/mxc-sdk/bin/x64/linux-test-proxy
-	rm -f ${d}/@microsoft/mxc-sdk/bin/x64/lxc-exec
+	local f m
+	while IFS= read -r -d '' f; do
+		m=$(readelf -h "$f" 2>/dev/null | sed -n 's/^ *Machine: *//p') || true
+		if [ -n "$m" ] && [ "${m#AArch64}" = "$m" ]; then
+			echo "removing foreign-arch ELF ($m): ${f#${DESTDIR}}"
+			rm -f "$f"
+		fi
+	done < <(find ${DESTDIR}/opt/vscodium -type f -print0)
+	return 0
 }
