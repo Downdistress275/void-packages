@@ -31,7 +31,11 @@ do_install() {
 }
 
 post_install() {
-	for f in $(find ${DESTDIR}/opt/vscodium -type f); do
-		readelf -d "$f" 2>/dev/null | grep -qE 'ld-linux-x86-64|ld64\.so' && echo "FOREIGN-ARCH: $f"
-	done
+	local d=${DESTDIR}/opt/vscodium/resources/app/node_modules.asar.unpacked
+
+	# foreign-architecture binaries that can't run on aarch64
+	rm -rf ${d}/@vscode/ripgrep-universal/bin/linux-s390x
+	rm -rf ${d}/@vscode/ripgrep-universal/bin/linux-ppc64
+	rm -f ${d}/@microsoft/mxc-sdk/bin/x64/linux-test-proxy
+	rm -f ${d}/@microsoft/mxc-sdk/bin/x64/lxc-exec
 }
