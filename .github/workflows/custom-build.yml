@@ -1,0 +1,30 @@
+name: custom-build
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths: ["srcpkgs/vscodium/**", ".github/workflows/custom-build.yml", ".github/scripts/**"]
+permissions:
+  contents: write
+concurrency:
+  group: custom-build
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 360
+    container:
+      image: ghcr.io/void-linux/void-glibc-full:latest
+      options: --privileged
+    steps:
+      - name: Base tools
+        run: |
+          xbps-install -Syu xbps || true
+          xbps-install -Syu
+          xbps-install -Sy bash git curl openssl sudo github-cli coreutils findutils
+      - uses: actions/checkout@v4
+      - name: Build, sign, publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          XBPS_PRIVKEY: ${{ secrets.XBPS_PRIVKEY }}
+        run: bash .github/scripts/build.sh
